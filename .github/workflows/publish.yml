@@ -1,0 +1,99 @@
+name: Auto Version & Publish to PyPI
+
+on:
+  push:
+    branches: ["main", "master"]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version increment when publishing manually"
+        type: choice
+        default: "patch"
+        options: ["patch", "minor", "major"]
+      version:
+        description: "Optional explicit X.Y.Z version override (leaves empty for auto-bump)"
+        type: string
+        default: ""
+
+concurrency:
+  group: pypi-publish
+  cancel-in-progress: false
+
+jobs:
+  test:
+    if: "github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip publish]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install and run pytest
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+          pytest -v
+
+  publish:
+    needs: test
+    if: "github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip publish]')"
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/oilprops
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Resolve next release version
+        id: ver
+        env:
+          INPUT_BUMP: ${{ github.event.inputs.bump || 'patch' }}
+          INPUT_VERSION: ${{ github.event.inputs.version || '' }}
+        run: python .github/scripts/resolve_version.py
+
+      - name: Tag release commit in GitHub
+        if: steps.ver.outputs.should_publish == 'true' && steps.ver.outputs.needs_tag == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.ver.outputs.tag }}" -m "Release ${{ steps.ver.outputs.tag }}"
+          git push origin "${{ steps.ver.outputs.tag }}"
+
+      - name: Build universal wheel and sdist
+        if: steps.ver.outputs.should_publish == 'true'
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine setuptools-scm
+          python -m build
+          twine check dist/*
+
+      - name: Verify built wheel version and import
+        if: steps.ver.outputs.should_publish == 'true'
+        run: |
+          python -m pip install --force-reinstall dist/oilprops-*-py3-none-any.whl
+          python -c "import oilprops; assert oilprops.__version__ == '${{ steps.ver.outputs.version }}', oilprops.__version__; print('Verified wheel version:', oilprops.__version__)"
+
+      - name: Publish to PyPI via Trusted Publishing
+        if: steps.ver.outputs.should_publish == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1

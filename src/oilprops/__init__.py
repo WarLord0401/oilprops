@@ -71,7 +71,15 @@ from oilprops.units import (
     sus_to_cst,
 )
 
-__version__ = "0.1.0"
+try:
+    from oilprops._version import __version__
+except ImportError:  # pragma: no cover
+    try:
+        from importlib.metadata import version as _pkg_version
+
+        __version__ = _pkg_version("oilprops")
+    except Exception:
+        __version__ = "0.0.0.dev0"
 
 __all__ = [
     "__version__",

@@ -2,6 +2,10 @@
 venv/
 .venv/
 env/
+temp/
+
+# Generated dynamic version file
+src/oilprops/_version.py
 
 # Build & packaging
 build/
