@@ -1,0 +1,68 @@
+cff-version: 1.2.0
+message: "If you use OilProps in your work, please cite it using the metadata below."
+title: "OilProps: Universal Petroleum Oil Thermophysical and PVT Property Library in Python"
+type: software
+version: "0.1.0"
+date-released: "2026-11-26"
+license: MIT
+repository-code: "https://github.com/WarLord0401/oilprops"
+url: "https://github.com/WarLord0401/oilprops"
+authors:
+  - name: "Kanishk Teotia"
+keywords:
+  - petroleum
+  - fuel-oil
+  - thermodynamics
+  - viscosity
+  - astm-d341
+  - iso-91-1
+  - compressibility
+  - hydrocarbons
+references:
+  - type: software
+    title: "Thermo: Chemical properties component of Chemical Engineering Design Library (ChEDL)"
+    authors:
+      - family-names: Bell
+        given-names: Caleb
+      - name: "Contributors"
+    repository-code: "https://github.com/CalebBell/thermo"
+    license: MIT
+  - type: software
+    title: "Chemicals: Chemical properties component of Chemical Engineering Design Library (ChEDL)"
+    authors:
+      - family-names: Bell
+        given-names: Caleb
+      - family-names: Cortes-Pena
+        given-names: "Yoel Rene"
+      - name: "Contributors"
+    repository-code: "https://github.com/CalebBell/chemicals"
+    license: MIT
+  - type: article
+    title: "A modified corresponding states method for predicting hydrocarbon properties"
+    authors:
+      - family-names: Kesler
+        given-names: "M. G."
+      - family-names: Lee
+        given-names: "B. I."
+    journal: "Hydrocarbon Processing"
+    year: 1976
+    volume: 55
+    issue: 3
+    start: 153
+    end: 158
+  - type: article
+    title: "An improved correlation for densities of compressed liquids and liquid mixtures"
+    authors:
+      - family-names: Thomson
+        given-names: "G. H."
+      - family-names: Brobst
+        given-names: "K. R."
+      - family-names: Hankinson
+        given-names: "R. W."
+    journal: "AIChE Journal"
+    year: 1982
+    volume: 28
+    issue: 4
+    start: 671
+    end: 676
+    doi: "10.1002/aic.690280420"

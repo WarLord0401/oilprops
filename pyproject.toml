@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=64.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oilprops"
+version = "0.1.0"
+description = "Universal thermophysical, transport, caloric, and PVT property library for petroleum oils, industrial fuel oils, hydrocarbons, and pseudocomponents."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Kanishk Teotia" },
+]
+keywords = [
+    "petroleum",
+    "fuel-oil",
+    "thermodynamics",
+    "viscosity",
+    "astm-d341",
+    "iso-91-1",
+    "compressibility",
+    "hydrocarbons",
+    "chemical-engineering",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "thermo>=0.4.0",
+    "chemicals>=1.3.0",
+    "numpy>=1.23.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "build>=0.10.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/WarLord0401/oilprops"
+Source = "https://github.com/WarLord0401/oilprops"
+Issues = "https://github.com/WarLord0401/oilprops/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
