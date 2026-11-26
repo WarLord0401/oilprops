@@ -12,7 +12,16 @@ import urllib.request
 from typing import Optional, Sequence, Tuple
 
 SEMVER_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
+PUBLISH_DIRECTIVE_RE = re.compile(r"\[publish(?::(patch|minor|major))?\]", re.IGNORECASE)
 INITIAL_VERSION: Tuple[int, int, int] = (0, 1, 0)
+
+
+def parse_publish_directive(commit_message: str) -> Optional[str]:
+    """Return 'patch', 'minor', or 'major' if commit_message requests publishing, else None."""
+    match = PUBLISH_DIRECTIVE_RE.search(commit_message or "")
+    if not match:
+        return None
+    return (match.group(1) or "patch").lower()
 
 
 def parse_semver(raw: str) -> Optional[Tuple[int, int, int]]:
@@ -82,6 +91,7 @@ def resolve_release(
     event_name: str,
     ref_type: str,
     ref_name: str,
+    commit_message: str = "",
     bump_input: str = "patch",
     explicit_version: str = "",
     published_versions: Sequence[Tuple[int, int, int]],
@@ -90,6 +100,7 @@ def resolve_release(
 ) -> dict[str, str]:
     """
     Determine version, tag, whether a new tag must be created, and whether to publish.
+    Branch pushes require '[publish]' (or '[publish:patch|minor|major]') in commit_message.
     """
     published_set = set(published_versions)
 
@@ -111,9 +122,23 @@ def resolve_release(
                 "reason": f"Tag {ref_name!r} is not strict vX.Y.Z semver",
             }
         needs_tag = False
-    elif head_tag is not None and event_name != "workflow_dispatch":
-        target = head_tag
-        needs_tag = False
+    elif event_name == "push":
+        directive = parse_publish_directive(commit_message)
+        if directive is None:
+            return {
+                "version": "",
+                "tag": "",
+                "needs_tag": "false",
+                "should_publish": "false",
+                "reason": "Commit message does not contain [publish]; skipping release",
+            }
+        if head_tag is not None:
+            target = head_tag
+            needs_tag = False
+        else:
+            all_known = list(published_versions) + list(repo_tags)
+            target = INITIAL_VERSION if not all_known else bump_semver(max(all_known), directive)
+            needs_tag = target not in set(repo_tags)
     else:
         all_known = list(published_versions) + list(repo_tags)
         if not all_known:
@@ -142,10 +167,20 @@ def resolve_release(
 
 
 def main() -> int:
+    commit_msg = os.environ.get("COMMIT_MESSAGE", "")
+    if not commit_msg:
+        try:
+            commit_msg = subprocess.check_output(
+                ["git", "log", "-1", "--pretty=%B"], text=True
+            )
+        except Exception:
+            commit_msg = ""
+
     result = resolve_release(
         event_name=os.environ.get("GITHUB_EVENT_NAME", "push"),
         ref_type=os.environ.get("GITHUB_REF_TYPE", "branch"),
         ref_name=os.environ.get("GITHUB_REF_NAME", "main"),
+        commit_message=commit_msg,
         bump_input=os.environ.get("INPUT_BUMP", "patch"),
         explicit_version=os.environ.get("INPUT_VERSION", ""),
         published_versions=fetch_pypi_versions("oilprops"),
